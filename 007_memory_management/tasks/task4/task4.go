@@ -1,0 +1,29 @@
+package task4
+
+type Point struct{ X, Y int }
+
+//go:noinline
+func NewPointValue(x, y int) Point { return Point{x, y} }
+
+//go:noinline
+func NewPointPointer(x, y int) *Point { return &Point{x, y} }
+
+func CollectNoCap(n int) []int {
+	var result []int
+
+	for i := 0; i < n; i++ {
+		result = append(result, i)
+	}
+
+	return result
+}
+
+func CollectWithCap(n int) []int {
+	result := make([]int, 0, n)
+
+	for i := 0; i < n; i++ {
+		result = append(result, i)
+	}
+
+	return result
+}

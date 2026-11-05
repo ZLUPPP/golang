@@ -12,23 +12,31 @@ type Record struct {
 	Grade int
 }
 
+var ErrBadFormat = errors.New("bad format")
+
 func ParseAll(input string) ([]Record, error) {
 	var err error = nil
 	strs := strings.Split(input, "\n")
-	result := make([]Record, len(strs))
+	var result []Record
+
 	for i, line := range strs {
-		line_ := strings.Split(line, ", ")
+		line_ := strings.Split(line, ",")
 		if len(line_) != 2 {
-			errors.Join(err, errors.New(fmt.Sprintf("line %d: invalid line", i)))
+			err = errors.Join(err, fmt.Errorf("line %d: %w", i+1, ErrBadFormat))
 			continue
 		}
-		grade, err1 := strconv.Atoi(line_[1])
-		if err1 != nil || (0 > grade || grade > 100) {
-			errors.Join(err, errors.New(fmt.Sprintf("line %d: invalid grade", i)))
+		grade, err1 := strconv.Atoi(strings.TrimSpace(line_[1]))
+		if err1 != nil {
+			err = errors.Join(err, fmt.Errorf("line %d: %w", i+1, err1))
 			continue
 		}
 
-		append(result, Record{line_[0], grade})
+		if 0 > grade || grade > 100 {
+			err = errors.Join(err, fmt.Errorf("line %d: grade out of range: %d", i+1, grade))
+			continue
+		}
+
+		result = append(result, Record{line_[0], grade})
 	}
 	return result, err
 }
@@ -39,5 +47,17 @@ Dias, 8O
 Timur
 Bota, 99999999999999999999
 Ali, 70`
-	ParseAll(input)
+	records, err := ParseAll(input)
+
+	fmt.Println("Records: ", records)
+	fmt.Println("Errors: ", err)
+
+	fmt.Println("Bad format: ", errors.Is(err, ErrBadFormat))
+	fmt.Println("Syntax: ", errors.Is(err, strconv.ErrSyntax))
+	fmt.Println("Range: ", errors.Is(err, strconv.ErrRange))
+
+	var numErr *strconv.NumError
+	if errors.As(err, &numErr) {
+		fmt.Println("NumError: ", numErr)
+	}
 }
